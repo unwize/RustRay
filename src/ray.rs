@@ -9,11 +9,11 @@ pub struct Ray {
 
 impl Ray {
     fn magnitude(&self) -> i32 {
-        (
+        ((
             self.direction.x * self.direction.x
                 + self.direction.y * self.direction.x
                 + self.direction.z * self.direction.z
-        ) as f64.sqrt().round() as i32
+        ) as f64).sqrt() as i32
     }
 
     pub fn normalize(&mut self) {
@@ -22,12 +22,10 @@ impl Ray {
             x : self.direction.x/magnitude,
             y : self.direction.y/magnitude,
             z : self.direction.z/magnitude
-        }
-
-        ;
+        };
     }
 
-    pub fn with_direction(&mut self) -> [i32; 3] {
-        [self.origin[0] + self.direction[0], self.origin[1] + self.direction[1], self.origin[2] + self.direction[2]]
+    pub fn squish(&self) -> IVec3 {
+        self.origin.unwrap_or(IVec3::new(0,0,0)) + self.direction
     }
 }
