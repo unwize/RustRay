@@ -37,7 +37,7 @@ impl IVec3 {
     }
 
     /// Returns a new vector that is a dot product of self and the passed vector
-    pub fn cross(&self, rhs: Self) -> Self {
+    pub fn cross(&self, rhs: &Self) -> Self {
         Self {
             x: self.y * rhs.z - rhs.y * self.z,
             y: self.z * rhs.x - rhs.z * self.x,
