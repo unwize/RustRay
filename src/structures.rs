@@ -23,7 +23,7 @@ impl IVec3 {
     }
 
     /// Returns a new vector where each element is equal to the passed value
-    fn splat(value: i32) -> Self {
+    pub(crate) fn splat(value: i32) -> Self {
         IVec3 { x: value, y: value, z: value }
     }
 

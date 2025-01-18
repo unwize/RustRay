@@ -8,15 +8,18 @@ This is, first and foremost, a project with which I am learning the ins-and-outs
 ## Goals
 
 - Implement a basic suite of primitives:
-  - Plane
-  - Sphere
-  - Cube
+  - Plane (TODO)
+  - Sphere (IN PROGRESS)
+  - Cube (TODO)
   - Triangle (stretch)
 - Implement lighting
+  - Ambient (TODO)
+  - Diffuse (TODO)
+  - Specular (TODO)
 - Implement surface effects
-  - Diffusion
-  - Reflectivity
-  - Transparency (stretch)
+  - Diffusion (TODO)
+  - Reflectivity (TODO)
+  - Transparency (stretch) 
 - Benchmark scenes of increasing complexity each time a "release" is completd.
 - Explore NVidia-specific technologies like CUDA to enhance performance (stretch)
 
