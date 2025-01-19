@@ -5,3 +5,13 @@ pub struct Light {
     color: Color,
     intensity: f64,
 }
+
+impl Light {
+    pub fn new(origin: Vec3, color: Color, intensity: f64) -> Light {
+        Self {
+            origin,
+            color,
+            intensity,
+        }
+    }
+}

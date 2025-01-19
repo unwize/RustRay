@@ -30,7 +30,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    fn new(focal_length: f32, origin_ray: Ray, fov: u32, image_dimensions: [u32; 2]) -> Self {
+    pub(crate) fn new(focal_length: f32, origin_ray: Ray, fov: u32, image_dimensions: [u32; 2]) -> Self {
         Self {
             focal_length,
             origin_ray,
