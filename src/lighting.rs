@@ -1,8 +1,7 @@
 use crate::color::Color;
-use crate::structures::IVec3;
-
+use glam::f32::Vec3;
 pub struct Light {
-    origin: IVec3,
+    origin: Vec3,
     color: Color,
     intensity: f64,
 }

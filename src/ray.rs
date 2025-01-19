@@ -1,31 +1,31 @@
-use crate::structures::IVec3;
+use glam::f32::Vec3;
 
 // A pair of i32 arrays containing an optional origin and a required direction vector.
 // When origin is None, assume that the origin is the eye position
 pub struct Ray {
-    pub origin: IVec3,
-    pub direction: IVec3,
+    pub origin: Vec3,
+    pub direction: Vec3,
 }
 
 impl Ray {
-    fn magnitude(&self) -> i32 {
-        ((
+    fn magnitude(&self) -> f32 {
+        (
             self.direction.x * self.direction.x
                 + self.direction.y * self.direction.x
                 + self.direction.z * self.direction.z
-        ) as f64).sqrt() as i32
+        ).sqrt()
     }
 
     pub fn normalize(&mut self) {
         let magnitude = self.magnitude();
-        self.direction = IVec3 {
+        self.direction = Vec3 {
             x : self.direction.x/magnitude,
             y : self.direction.y/magnitude,
             z : self.direction.z/magnitude
         };
     }
 
-    pub fn squish(&self) -> IVec3 {
+    pub fn squish(&self) -> Vec3 {
         self.origin + self.direction
     }
 }
