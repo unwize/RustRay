@@ -1,10 +1,19 @@
-use crate::primitives::Intersectable;
+use crate::primitives::{Colored, Intersectable};
 use crate::ray::Ray;
 use glam::f32::Vec3;
+use crate::color::Color;
+use crate::lighting::Light;
+use crate::render::Scene;
 
 struct Sphere {
     origin: Vec3,
     radius: f32,
+}
+
+impl Colored for Sphere {
+    fn get_point_color(&self, camera_ray: &Ray, intersecting_point: &Vec3, scene: &Scene) -> Color {
+        todo!()
+    }
 }
 
 impl Intersectable for Sphere {

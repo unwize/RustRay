@@ -1,42 +1,133 @@
-use glam::f32::Vec2;
-use glam::Vec3;
+use std::rc::Rc;
+use crate::color::Color;
 use crate::lighting::Light;
 use crate::primitives::Intersectable;
 use crate::ray::Ray;
-use crate::primitives::plane::FinitePlane;
+use glam::Vec3;
 
-struct Renderer {
-    ambient_light: Light,
-    point_lights: Vec<Light>,
-    primitives: Vec<Box<dyn Intersectable>>,
-    camera_pos: Vec3,
-    camera_direction: Vec3,
-    screen_plane: FinitePlane,
-    screen_resolution: [u32; 2],
-    fov: u32
+/// Main data structure that contains all the necessary data to represent a scene
+pub struct Renderer {
+    pub scene: Scene,
+    pub camera: Camera,
+    image_data: Vec<Vec<Color>>
+}
+
+pub struct Scene {
+    pub ambient_light: Light,
+    pub point_lights: Vec<Light>,
+    pub primitives: Vec<Rc<Box<dyn Intersectable>>>,
+}
+
+/// Simple struct that contains camera-specific data
+pub struct Camera {
+    pub focal_length: f32,
+    pub origin_ray: Ray,
+    pub fov: u32,
+    pub image_dimensions: [u32; 2],
+
+    _aspect_ratio: Option<f32>,
+    _viewport_dimensions: Option<[f32; 2]>
+}
+
+impl Camera {
+    fn new(focal_length: f32, origin_ray: Ray, fov: u32, image_dimensions: [u32; 2]) -> Self {
+        Self {
+            focal_length,
+            origin_ray,
+            fov,
+            image_dimensions,
+            _aspect_ratio: None,
+            _viewport_dimensions : None,
+        }
+    }
+
+    /// Compute the aspect ratio of the image from the user-defined image height and width.
+    /// Cache the result as image dimensions should not change.
+    fn aspect_ratio(&mut self) -> f32 {
+        if self._aspect_ratio == None {
+            self._aspect_ratio = Some(self.image_dimensions[0] as f32 / self.image_dimensions[1] as f32)
+        }
+
+        self._aspect_ratio.unwrap()
+    }
+
+    /// Fetch viewport dimensions. These are calculated and cached if they haven't been already.
+    fn viewport_dimensions(&mut self) -> [f32; 2] {
+        if self._viewport_dimensions == None {
+            self._viewport_dimensions = Some([2.0, 2.0 * self.aspec_ratio()])
+        }
+
+        self._viewport_dimensions.unwrap()
+    }
 }
 
 impl Renderer {
 
-    // Screen-space transformations: https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
-    fn get_pixel_ray(&self, pixel: [u32; 2]) -> Vec3 {
-        let aspec_ratio = self.screen_resolution[0] as f32 / self.screen_resolution[1] as f32;
-        let x = pixel[0] as f32 + 0.5;
-        let y = pixel[1] as f32 + 0.5;
 
-        let pixel_ndc = Vec2::new(x/ self.screen_resolution[0] as f32, y / self.screen_resolution[1] as f32);
-        let pixel_screen = Vec2::new(1.0 - 2.0 * pixel_ndc.x, 1.0 - 2.0 * pixel_ndc.y);
+    /// Main rendering function call. Generates camera rays and stores resultant color values
+    pub fn render(&mut self) {
+        // Get vectors describing the magnitude of the plane of the viewport
+        let viewport_u = Vec3::new(self.camera.viewport_dimensions()[0], 0.0, 0.0);   // width
+        let viewport_v = Vec3::new(0.0, -self.camera.viewport_dimensions()[1], 0.0);  // height
 
-        let fov_coef = f32::tan(self.fov as f32 / 2.0);
-        let pixel_camera: Vec2 = Vec2::new(
-            (2.0 * pixel_screen.x - 1.0) * aspec_ratio * fov_coef,
-            1.0 - 2.0 * pixel_screen.y *  fov_coef
-        );
+        // Calculate vectors representing the distance between the center of each pixel (delta vectors)
+        let pixel_delta_u = viewport_u / self.camera.image_dimensions[0] as f32;
+        let pixel_delta_v = viewport_v / self.camera.image_dimensions[1] as f32;
 
-        (Vec3::new(pixel_camera.x, pixel_camera.y, -1.0) - self.camera_pos + self.camera_direction.normalize()).normalize()
+        // Calculate the location of the upper left pixel (0,0)
+        let viewport_root = self.camera.origin_ray.origin
+            - Vec3::new(0.0, 0.0, self.camera.focal_length)
+            - viewport_u/2.0 - viewport_v/2.0;  // The corner of the viewport plane
+        let root_pixel_pos = viewport_root + 0.5 * (pixel_delta_u + pixel_delta_v);  // Offset the corner of the viewport plane using the delta vectors to get the center of the pixel
 
+        // For each pixel
+        for y in 0.0..self.camera.image_dimensions[1] as f32 {
+            let v : Vec<Color> = vec![];
+            self.image_data.push(v);
+            for x in 0.0..self.camera.image_dimensions[0] as f32 {
+
+                // Compute the center of the pixel and then create a ray with which to cast for collision
+                let pixel_center = root_pixel_pos + (pixel_delta_u * x) + (pixel_delta_v * y);
+                let camera_ray_direction = pixel_center - self.camera.origin_ray.origin;
+                let camera_ray: Ray = Ray::new(self.camera.origin_ray.origin, camera_ray_direction);
+
+                self.cast_ray(camera_ray);
+            }
+        }
     }
-    pub fn trace(&self, pixel: [u32; 2]) {
 
+    /// Compute if any primitives in the scene intersect with the ray and store the color of the
+    /// primitive in the image data.
+    fn cast_ray(&mut self, camera_ray: Ray) -> Color {
+        let mut closest_intersection: f32 = f32::MAX;
+        let mut closest_primitive: Option<Rc<Box<dyn Intersectable>>> = None;
+        let mut closest_primitive_point: Vec3;
+        for primitive in self.scene.primitives {
+            let intersections = primitive.intersect(&camera_ray);
+
+            // If there is at least one point of intersection
+            if intersections.is_some() {
+
+                // For each point of intersection
+                for point in intersections.unwrap() {
+
+                    // Compute distance from the point to the camera. Discard all points that are
+                    // farther from the camera than the closest point
+                    let point_distance = self.camera.origin_ray.origin.distance(point);
+                    if point_distance < closest_intersection {
+                        closest_intersection = point_distance;
+                        closest_primitive = Some(primitive.clone());
+                        closest_primitive_point = point;
+                    }
+                }
+            }
+        }
+
+        if closest_primitive.is_some() {
+            return closest_primitive.unwrap().get_point_color(&camera_ray, &closest_primitive_point, &self.scene)
+        }
+
+        Color::new(0,0,0)
     }
+
 }

@@ -12,4 +12,12 @@ impl Color {
     pub fn into_array(self) -> [u8; 3] {
         [self.r, self.g, self.b]
     }
+
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Color { r, g, b }
+    }
+
+    pub fn default() -> Self {
+        Color::new(0, 0, 0)
+    }
 }

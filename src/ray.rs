@@ -28,4 +28,8 @@ impl Ray {
     pub fn squish(&self) -> Vec3 {
         self.origin + self.direction
     }
+
+    pub fn new(origin: Vec3, direction: Vec3) -> Ray {
+        Ray { origin, direction }
+    }
 }
