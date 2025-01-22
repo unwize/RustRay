@@ -1,12 +1,15 @@
-use glam::{vec3, Vec3};
-use crate::color::Color;
 use crate::lighting::Light;
 use crate::ray::Ray;
-use crate::render::{Camera, Scene};
+use crate::render::{Camera, Renderer, Scene};
+use crate::primitives::sphere;
+use glam::{vec3, Vec3};
+use image::Rgb;
+use std::fs::File;
+use std::rc::Rc;
+use crate::primitives::sphere::Sphere;
 
 pub mod primitives;
 pub mod ray;
-mod color;
 mod lighting;
 mod structures;
 mod render;
@@ -14,13 +17,13 @@ mod render;
 
 
 fn main() {
-    let ambient = Light::new(Vec3::default(), Color::new(50,50,50), 0.5);
+    let ambient = Light::new(Vec3::default(), Rgb([50,50,50]), 0.5);
     let point_lights = vec![];
 
     let scene = Scene {
         ambient_light: ambient,
         point_lights,
-        primitives: vec![],
+        primitives: vec![Rc::new(Box::new(Sphere::new(Vec3::new(1.0, 1.0, 2.0),2.0)))],
     };
 
     let camera = Camera::new(
@@ -28,4 +31,10 @@ fn main() {
         Ray::new(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0)),
         0,
         [200, 100]);
+
+    let mut renderer = Renderer::new(scene, camera);
+    renderer.render();
+
+    File::create("out/image.PNG").expect("TODO: Failed to create base file");
+    renderer.image_buffer.save("./out/image.PNG").unwrap()
 }

@@ -1,18 +1,23 @@
 use crate::primitives::{Colored, Intersectable};
 use crate::ray::Ray;
-use glam::f32::Vec3;
-use crate::color::Color;
-use crate::lighting::Light;
 use crate::render::Scene;
+use glam::f32::Vec3;
+use image::Rgb;
 
-struct Sphere {
+pub struct Sphere {
     origin: Vec3,
     radius: f32,
 }
 
+impl Sphere {
+    pub fn new(origin: Vec3, radius: f32) -> Self {
+        Self { origin, radius }
+    }
+}
+
 impl Colored for Sphere {
-    fn get_point_color(&self, camera_ray: &Ray, intersecting_point: &Vec3, scene: &Scene) -> Color {
-        todo!()
+    fn get_point_color(&self, camera_ray: &Ray, intersecting_point: &Vec3, scene: &Scene) -> Rgb<u8> {
+        Rgb([255, 255, 255])
     }
 }
 
@@ -43,12 +48,13 @@ impl Intersectable for Sphere {
         }
 
         //solve for t1c
-        let t1c = ((radius2 - d2) as f32).sqrt();
+        let t1c = (radius2 - d2).sqrt();
 
         //solve for intersection points
         let t1 = tc - t1c;
         let t2 = tc + t1c;
 
+        println!("Found intersections: {t1}, {t2}");
         Some(vec![ray.direction * t1, ray.direction * t2])
     }
 }

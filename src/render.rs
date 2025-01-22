@@ -1,15 +1,27 @@
 use std::rc::Rc;
-use crate::color::Color;
 use crate::lighting::Light;
 use crate::primitives::Intersectable;
 use crate::ray::Ray;
 use glam::Vec3;
+use image::{ImageBuffer, Rgb};
 
 /// Main data structure that contains all the necessary data to represent a scene
 pub struct Renderer {
     pub scene: Scene,
     pub camera: Camera,
-    image_data: Vec<Vec<Color>>
+    pub(crate) image_buffer: ImageBuffer<Rgb<u8>, Vec<u8>>
+}
+
+impl Renderer {
+    pub fn new(scene: Scene, camera: Camera) -> Renderer {
+        let w = camera.image_dimensions[0];
+        let l = camera.image_dimensions[1];
+        Renderer {
+            scene,
+            camera,
+            image_buffer: ImageBuffer::new(w, l)
+        }
+    }
 }
 
 pub struct Scene {
@@ -54,7 +66,7 @@ impl Camera {
     /// Fetch viewport dimensions. These are calculated and cached if they haven't been already.
     fn viewport_dimensions(&mut self) -> [f32; 2] {
         if self._viewport_dimensions == None {
-            self._viewport_dimensions = Some([2.0, 2.0 * self.aspec_ratio()])
+            self._viewport_dimensions = Some([2.0, 2.0 * self.aspect_ratio()])
         }
 
         self._viewport_dimensions.unwrap()
@@ -81,28 +93,27 @@ impl Renderer {
         let root_pixel_pos = viewport_root + 0.5 * (pixel_delta_u + pixel_delta_v);  // Offset the corner of the viewport plane using the delta vectors to get the center of the pixel
 
         // For each pixel
-        for y in 0.0..self.camera.image_dimensions[1] as f32 {
-            let v : Vec<Color> = vec![];
-            self.image_data.push(v);
-            for x in 0.0..self.camera.image_dimensions[0] as f32 {
+        for y in 0..self.camera.image_dimensions[1] {
+            let v : Vec<Rgb<u8>> = vec![];
+            for x in 0..self.camera.image_dimensions[0] {
 
                 // Compute the center of the pixel and then create a ray with which to cast for collision
-                let pixel_center = root_pixel_pos + (pixel_delta_u * x) + (pixel_delta_v * y);
+                let pixel_center = root_pixel_pos + (pixel_delta_u * x as f32) + (pixel_delta_v * y as f32);
                 let camera_ray_direction = pixel_center - self.camera.origin_ray.origin;
                 let camera_ray: Ray = Ray::new(self.camera.origin_ray.origin, camera_ray_direction);
 
-                self.cast_ray(camera_ray);
+                &self.image_buffer.put_pixel(x, y, self.cast_ray(camera_ray));
             }
         }
     }
 
     /// Compute if any primitives in the scene intersect with the ray and store the color of the
     /// primitive in the image data.
-    fn cast_ray(&mut self, camera_ray: Ray) -> Color {
+    fn cast_ray(&self, camera_ray: Ray) -> Rgb<u8> {
         let mut closest_intersection: f32 = f32::MAX;
         let mut closest_primitive: Option<Rc<Box<dyn Intersectable>>> = None;
-        let mut closest_primitive_point: Vec3;
-        for primitive in self.scene.primitives {
+        let mut closest_primitive_point: Vec3 = Vec3::MAX;
+        for primitive in &self.scene.primitives {
             let intersections = primitive.intersect(&camera_ray);
 
             // If there is at least one point of intersection
@@ -127,7 +138,7 @@ impl Renderer {
             return closest_primitive.unwrap().get_point_color(&camera_ray, &closest_primitive_point, &self.scene)
         }
 
-        Color::new(0,0,0)
+        Rgb([0,0,0])
     }
 
 }

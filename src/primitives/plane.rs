@@ -1,12 +1,20 @@
 use crate::ray::Ray;
-use crate::primitives::Intersectable;
+use crate::primitives::{Colored, Intersectable};
 use glam::f32::Vec3;
+use image::Rgb;
+use crate::render::Scene;
 
 // Bounded plane intersection math: https://stackoverflow.com/questions/56316509/ray-bounded-plane-intersection
 pub struct FinitePlane {
     position: Vec3,
     u: Vec3,
     v: Vec3,
+}
+
+impl Colored for FinitePlane {
+    fn get_point_color(&self, camera_ray: &Ray, intersecting_point: &Vec3, scene: &Scene) -> Rgb<u8> {
+        todo!()
+    }
 }
 
 impl Intersectable for FinitePlane {
@@ -33,7 +41,7 @@ impl Intersectable for FinitePlane {
         //w2 = (- u_dot_v * u_dot_rhs + u_dot_u * v_dot_rhs) / det;
         let w2 = (- u_d_v * u_d_rhs + u_d_u * v_d_rhs)/det;
 
-        if (0.0 <= w1 && w1 <= 1.0 && 0.0 <= w2 && w2 <= 1.0 ){
+        if 0.0 <= w1 && w1 <= 1.0 && 0.0 <= w2 && w2 <= 1.0 {
             Some(vec![int_point])
         }
         else{
