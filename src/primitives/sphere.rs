@@ -39,7 +39,7 @@ impl Intersectable for Sphere {
             //println!("Bailed on a TC < 0");
             return None;
         }
-        let d2 = tc.powi(2) - L.length().powi(2);
+        let d2 = tc * tc - L.length_squared();
 
         let radius2 = self.radius * self.radius;
         if d2 > radius2 {
@@ -54,8 +54,11 @@ impl Intersectable for Sphere {
         let t1 = tc - t1c;
         let t2 = tc + t1c;
 
-        println!("Found intersections: {t1}, {t2}");
-        Some(vec![ray.direction * t1, ray.direction * t2])
+        let p1 = ray.direction * t1;
+        let p2 = ray.direction * t2;
+
+        println!("Found intersections: {p1}, {p2}");
+        Some(vec![p1, p2])
     }
 }
 
@@ -73,5 +76,28 @@ mod tests {
         assert_eq!(values.len(), 2, "Incorrect number of intersections detected");
         assert!(values.iter().any(|p| {p.eq(&Vec3::new(0.0, 0.0, 2.0))}), "Front-side intersection missing from values");
         assert!(values.iter().any(|p| {p.eq(&Vec3::new(0.0, 0.0, 4.0))}), "Back-side intersection missing from values");
+    }
+
+    #[test]
+    fn test_intersect_cross() {
+        let origin = Vec3::new(0.0, 0.0, 12.0);
+        let radius: f32 = 6.0;
+        let sphere = Sphere::new(origin.clone(), radius);
+
+        let mut offset = -radius;
+
+        loop {
+            if offset > radius {
+                break;
+            }
+
+            println!("Offset: {offset:?}");
+            let projection = origin + Vec3::new(offset, -offset, 0.0);
+            let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), projection.normalize());
+            println!("Testing ray: {ray}");
+            assert!(sphere.intersect(&ray).is_some());
+            offset += 1.0
+        }
+
     }
 }
