@@ -32,23 +32,23 @@ impl Intersectable for Sphere {
     fn intersect(&self, ray: &Ray) -> Option<Vec<Vec3>> {
 
         //solve for tc
-        let l: Vec3 = self.origin - ray.origin;
-        let tc = l.dot(ray.direction);
-
+        let L: Vec3 = self.origin - ray.origin;
+        let tc: f32 = L.dot(ray.direction);
 
         if tc < 0.0 {
+            //println!("Bailed on a TC < 0");
             return None;
         }
-
-        let d2 = (tc*tc) - (l.dot(l));
+        let d2 = tc.powi(2) - L.length().powi(2);
 
         let radius2 = self.radius * self.radius;
-        if  d2 > radius2 {
+        if d2 > radius2 {
+            //println!("Bailed on a short d2");
             return None;
         }
 
         //solve for t1c
-        let t1c = (radius2 - d2).sqrt();
+        let t1c = radius2 - d2;
 
         //solve for intersection points
         let t1 = tc - t1c;
@@ -56,5 +56,22 @@ impl Intersectable for Sphere {
 
         println!("Found intersections: {t1}, {t2}");
         Some(vec![ray.direction * t1, ray.direction * t2])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_intersect_origin() {
+        let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
+        let sphere = Sphere::new(Vec3::new(0.0, 0.0, 3.0), 1.0);
+        let intersections = sphere.intersect(&ray);
+        assert!(intersections.is_some(), "No intersections found");
+        let values = intersections.unwrap();
+        assert_eq!(values.len(), 2, "Incorrect number of intersections detected");
+        assert!(values.iter().any(|p| {p.eq(&Vec3::new(0.0, 0.0, 2.0))}), "Front-side intersection missing from values");
+        assert!(values.iter().any(|p| {p.eq(&Vec3::new(0.0, 0.0, 4.0))}), "Back-side intersection missing from values");
     }
 }

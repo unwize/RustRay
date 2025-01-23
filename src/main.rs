@@ -23,7 +23,7 @@ fn main() {
     let scene = Scene {
         ambient_light: ambient,
         point_lights,
-        primitives: vec![Rc::new(Box::new(Sphere::new(Vec3::new(1.0, 1.0, 2.0),2.0)))],
+        primitives: vec![Rc::new(Box::new(Sphere::new(Vec3::new(0.0, 0.0, 2.0),2.0)))],
     };
 
     let camera = Camera::new(

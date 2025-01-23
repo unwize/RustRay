@@ -17,12 +17,7 @@ impl Ray {
     }
 
     pub fn normalize(&mut self) {
-        let magnitude = self.magnitude();
-        self.direction = Vec3 {
-            x : self.direction.x/magnitude,
-            y : self.direction.y/magnitude,
-            z : self.direction.z/magnitude
-        };
+        self.direction = self.direction.normalize();
     }
 
     pub fn squish(&self) -> Vec3 {

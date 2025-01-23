@@ -102,7 +102,7 @@ impl Renderer {
                 let camera_ray_direction = pixel_center - self.camera.origin_ray.origin;
                 let camera_ray: Ray = Ray::new(self.camera.origin_ray.origin, camera_ray_direction);
 
-                &self.image_buffer.put_pixel(x, y, self.cast_ray(camera_ray));
+                let _ = &self.image_buffer.put_pixel(x, y, self.cast_ray(camera_ray));
             }
         }
     }
