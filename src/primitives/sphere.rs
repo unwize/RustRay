@@ -1,23 +1,24 @@
-use crate::primitives::{Colored, Intersectable};
+use crate::material::Material;
+use crate::primitives::{Hit, Intersectable, Materialed};
 use crate::ray::Ray;
-use crate::render::Scene;
 use glam::f32::Vec3;
-use image::Rgb;
 
 pub struct Sphere {
     origin: Vec3,
     radius: f32,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(origin: Vec3, radius: f32) -> Self {
-        Self { origin, radius }
+    pub fn new(origin: Vec3, radius: f32, material: Material) -> Self {
+        Self { origin, radius, material }
     }
 }
 
-impl Colored for Sphere {
-    fn get_point_color(&self, camera_ray: &Ray, intersecting_point: &Vec3, scene: &Scene) -> Rgb<u8> {
-        Rgb([255, 255, 255])
+impl Materialed for Sphere {
+
+    fn get_material(&self) -> &Material {
+        &self.material
     }
 }
 
@@ -29,36 +30,49 @@ impl Intersectable for Sphere {
 
     /// Computes the intersection between a normalized ray and self. If ray is not normalized,
     /// unexpected behavior may occur.
-    fn intersect(&self, ray: &Ray) -> Option<Vec<Vec3>> {
+    fn intersect(&self, ray: &Ray) -> Option<Hit> {
 
-        //solve for tc
-        let L: Vec3 = self.origin - ray.origin;
-        let tc: f32 = L.dot(ray.direction);
+        let mut hits: Option<Vec<Vec3>> = None;
+        let q = self.origin - ray.origin;
+        let v_dot_q = ray.direction.dot(q);
+        let d_sqrd = q.dot(q) - self.radius*self.radius;
+        let discriminant = v_dot_q * v_dot_q - d_sqrd;
 
-        if tc < 0.0 {
-            //println!("Bailed on a TC < 0");
-            return None;
+        if discriminant >= 0.0 {
+            let root = discriminant.sqrt();
+            let t0 = v_dot_q - root;
+            let t1 = v_dot_q + root;
+
+            let entry: f32;
+            let exit: f32;
+
+            if t0 < t1 {
+                entry = t0;
+                exit = t1;
+            } else {
+                entry = t1;
+                exit = t0;
+            }
+
+            let normal: Option<Vec3>  = None
+
+            if entry > 0.0 {
+                // hit.normal = self.normal(ray.pos(hit.entry));
+                normal = Some(self.normal(ray.direction * entry))
+            }
+            if exit > 0.0 {
+                // hit.normal2 = self.normal(ray.pos(hit.exit));
+                normal = Some(self.normal(ray.direction * exit))
+            }
+
+            let hit = Hit::new(entry, exit, ray.clone(), Vec3::default(), &self.material);
+
         }
-        let d2 = tc * tc - L.length_squared();
+    }
 
-        let radius2 = self.radius * self.radius;
-        if d2 > radius2 {
-            //println!("Bailed on a short d2");
-            return None;
-        }
 
-        //solve for t1c
-        let t1c = radius2 - d2;
+        return hit
 
-        //solve for intersection points
-        let t1 = tc - t1c;
-        let t2 = tc + t1c;
-
-        let p1 = ray.direction * t1;
-        let p2 = ray.direction * t2;
-
-        println!("Found intersections: {p1}, {p2}");
-        Some(vec![p1, p2])
     }
 }
 

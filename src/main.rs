@@ -13,8 +13,7 @@ pub mod ray;
 mod lighting;
 mod structures;
 mod render;
-
-
+mod material;
 
 fn main() {
     let ambient = Light::new(Vec3::default(), Rgb([50,50,50]), 0.5);
