@@ -125,6 +125,27 @@ mod tests {
             assert!(sphere.intersect(&ray).is_some());
             offset += 1.0
         }
+    }
 
+    #[test]
+    fn test_intersect_miss_behind() {
+        let origin = Vec3::new(0.0, 0.0, -12.0);
+        let radius: f32 = 6.0;
+        let sphere = Sphere::new(origin, radius, get_material());
+
+        let mut offset = 0.0;
+
+        loop {
+            if offset > radius {
+                break;
+            }
+
+            println!("Offset: {offset:?}");
+            let projection = origin + Vec3::new(offset, -offset, 12.0);
+            let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), projection.normalize());
+            println!("Testing ray: {ray}");
+            assert!(sphere.intersect(&ray).is_none());
+            offset += 1.0
+        }
     }
 }

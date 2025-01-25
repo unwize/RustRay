@@ -25,7 +25,7 @@ fn main() {
         primitives: vec![
             Rc::new(
                 Box::new(
-                    Sphere::new(Vec3::new(0.0, 0.0, 2.0), 2.0, Material::new(Rgb([255, 255, 255]), None, None, None))
+                    Sphere::new(Vec3::new(0.0, 0.0, 6.0), 2.0, Material::new(Rgb([255, 255, 255]), None, None, None))
                 )
             )
         ],
