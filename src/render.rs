@@ -118,9 +118,9 @@ impl Renderer {
 
             // If there is at least one point of intersection
             if intersections.is_some() {
-
+                let hit = intersections.unwrap();
                 // For each point of intersection
-                for point in intersections.unwrap() {
+                for point in [hit.entry_point(), hit.exit_point()] {
 
                     // Compute distance from the point to the camera. Discard all points that are
                     // farther from the camera than the closest point
@@ -135,7 +135,7 @@ impl Renderer {
         }
 
         if closest_primitive.is_some() {
-            return closest_primitive.unwrap().get_point_color(&camera_ray, &closest_primitive_point, &self.scene)
+            return closest_primitive.unwrap().get_material().diffuse_color
         }
 
         Rgb([0,0,0])

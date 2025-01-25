@@ -1,6 +1,7 @@
 use crate::material::Material;
-use crate::primitives::{Hit, Intersectable, Materialed};
+use crate::primitives::{Intersectable, Materialed};
 use crate::ray::Ray;
+use crate::structures::Hit;
 use glam::f32::Vec3;
 
 pub struct Sphere {
@@ -31,8 +32,6 @@ impl Intersectable for Sphere {
     /// Computes the intersection between a normalized ray and self. If ray is not normalized,
     /// unexpected behavior may occur.
     fn intersect(&self, ray: &Ray) -> Option<Hit> {
-
-        let mut hits: Option<Vec<Vec3>> = None;
         let q = self.origin - ray.origin;
         let v_dot_q = ray.direction.dot(q);
         let d_sqrd = q.dot(q) - self.radius*self.radius;
@@ -54,51 +53,65 @@ impl Intersectable for Sphere {
                 exit = t0;
             }
 
-            let normal: Option<Vec3>  = None
+            let mut normal_entry: Option<Vec3>  = None;
+            let mut normal_exit: Option<Vec3> = None;
 
             if entry > 0.0 {
                 // hit.normal = self.normal(ray.pos(hit.entry));
-                normal = Some(self.normal(ray.direction * entry))
+                normal_entry = Some(self.normal(ray.direction * entry))
             }
             if exit > 0.0 {
                 // hit.normal2 = self.normal(ray.pos(hit.exit));
-                normal = Some(self.normal(ray.direction * exit))
+                normal_exit = Some(self.normal(ray.direction * exit))
             }
 
-            let hit = Hit::new(entry, exit, ray.clone(), Vec3::default(), &self.material);
+            let hit = Hit::new(entry, exit, ray.clone(), normal_entry, normal_exit, self.material.clone());
+
+            let p0 = hit.entry_point();
+            let p1 = hit.exit_point();
+            println!("Hit @{p0}, {p1}");
+
+            return Some(hit)
 
         }
+
+        None
     }
 
-
-        return hit
-
+    fn normal(&self, point: Vec3) -> Vec3 {
+        point - self.origin
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use image::Rgb;
+
+    fn get_material() -> Material {
+        Material::new(Rgb([0, 0, 1]), None, None, None)
+    }
 
     #[test]
     fn test_intersect_origin() {
         let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0));
-        let sphere = Sphere::new(Vec3::new(0.0, 0.0, 3.0), 1.0);
+        let sphere = Sphere::new(Vec3::new(0.0, 0.0, 3.0), 1.0, get_material());
         let intersections = sphere.intersect(&ray);
         assert!(intersections.is_some(), "No intersections found");
-        let values = intersections.unwrap();
-        assert_eq!(values.len(), 2, "Incorrect number of intersections detected");
-        assert!(values.iter().any(|p| {p.eq(&Vec3::new(0.0, 0.0, 2.0))}), "Front-side intersection missing from values");
-        assert!(values.iter().any(|p| {p.eq(&Vec3::new(0.0, 0.0, 4.0))}), "Back-side intersection missing from values");
+        let hit = intersections.unwrap();
+        assert!(hit.entry > 0.0, "Entry point missed, improperly");
+        assert!(hit.exit > 0.0, "Exit point missed, improperly");
+        assert_eq!(hit.entry * hit.ray.direction, Vec3::new(0.0, 0.0, 2.0));
+        assert_eq!(hit.exit * hit.ray.direction, Vec3::new(0.0, 0.0, 4.0));
     }
 
     #[test]
     fn test_intersect_cross() {
         let origin = Vec3::new(0.0, 0.0, 12.0);
         let radius: f32 = 6.0;
-        let sphere = Sphere::new(origin.clone(), radius);
+        let sphere = Sphere::new(origin, radius, get_material());
 
-        let mut offset = -radius;
+        let mut offset = 0.0;
 
         loop {
             if offset > radius {
@@ -106,7 +119,7 @@ mod tests {
             }
 
             println!("Offset: {offset:?}");
-            let projection = origin + Vec3::new(offset, -offset, 0.0);
+            let projection = origin + Vec3::new(offset, -offset, 12.0);
             let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), projection.normalize());
             println!("Testing ray: {ray}");
             assert!(sphere.intersect(&ray).is_some());

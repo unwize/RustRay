@@ -1,12 +1,12 @@
 use crate::lighting::Light;
+use crate::primitives::sphere::Sphere;
 use crate::ray::Ray;
 use crate::render::{Camera, Renderer, Scene};
-use crate::primitives::sphere;
 use glam::{vec3, Vec3};
 use image::Rgb;
 use std::fs::File;
 use std::rc::Rc;
-use crate::primitives::sphere::Sphere;
+use crate::material::Material;
 
 pub mod primitives;
 pub mod ray;
@@ -22,7 +22,13 @@ fn main() {
     let scene = Scene {
         ambient_light: ambient,
         point_lights,
-        primitives: vec![Rc::new(Box::new(Sphere::new(Vec3::new(0.0, 0.0, 2.0),2.0)))],
+        primitives: vec![
+            Rc::new(
+                Box::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, 2.0), 2.0, Material::new(Rgb([255, 255, 255]), None, None, None))
+                )
+            )
+        ],
     };
 
     let camera = Camera::new(
